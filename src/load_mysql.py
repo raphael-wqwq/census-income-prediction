@@ -35,7 +35,7 @@ for _, row in df.iloc[5:].iterrows():
         )
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     """
-# %s sont des places holders a qui le connecteur va associer dans l'ordre les valeurs du second argument de " cursor.execute(sql_personne, values_personne)"
+# %s sont des places holders à qui le connecteur va associer dans l'ordre les valeurs du second argument de " cursor.execute(sql_personne, values_personne)"
 
     values_personne = (
         int(row["age"]),
