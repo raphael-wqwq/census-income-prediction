@@ -102,3 +102,15 @@ Je choisis pour le projet une base MySQL pour le stockage/requêtage comme celle
 Cela me permet de mettre en œuvre le modèle relationnel du projet, notamment les clés primaires, les clés étrangères et les jointures entre les tables personne et situation.
 
 Par la suite, je charge les données nettoyées dans MySQL est j'automatise le process à l’aide d’un script Python qui utilise mysql-connector-python. L’extension derrière,  SQLTools de VS Code est utilisée pour interroger la base, contrôler les données chargées et exécuter les requêtes SQL. 
+
+# mise en place de l' APi client avec FastApi
+
+J’ai dévellopé l'API avec FastAPI afin de créer une couche intermédiaire entre les utilisateurs ou les applications clientes et la base de données MySQL. L’API est organisée autour d’endpoints correspondant aux principales opérations CRUD , GET, POST, PUT et DELETE.
+
+Les données reçues par l’API sont validées à l’aide de modèles Pydantic, qui permettent de contrôler les types attendus avant leur traitement. Les identifiants transmis dans les routes sont également typés, par exemple id_pers: int.
+
+Les requêtes SQL utilisent des requêtes paramétrées avec des placeholders %s, plutôt que de construire directement les requêtes à partir des valeurs reçues. Cela permet de séparer les instructions SQL des données fournies par l’utilisateur et contribue à prévenir les injections SQL.
+
+ L’API gère également certains cas d’erreur avec des codes HTTP adaptés, par exemple 404 lorsqu’une personne n’existe pas et 409 lorsqu’une suppression est impossible à cause d’une contrainte d’intégrité référentielle.
+
+Ainsi, l’utilisation d’une API est préférable à un accès direct à la base car elle évite de fournir aux utilisateurs les identifiants MySQL et leur permet uniquement d’effectuer les opérations prévues par l’application. Elle centralise également la validation des données, les règles métier et la gestion des erreurs. Ainsi, le client peut manipuler les données au moyen de requêtes HTTP sans avoir à connaître la structure interne de la base ni à exécuter directement des requêtes SQL.

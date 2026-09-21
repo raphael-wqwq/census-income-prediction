@@ -221,6 +221,7 @@ def delete_personne(id_pers: int):
 
     return {"message": "Personne supprimée"}
 
+
 # démarrage du serveur web pour exécuter la variable app
 if __name__ == "__main__":
     uvicorn.run(
