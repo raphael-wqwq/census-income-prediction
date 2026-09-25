@@ -103,7 +103,7 @@ Cela me permet de mettre en œuvre le modèle relationnel du projet, notamment l
 
 Par la suite, je charge les données nettoyées dans MySQL est j'automatise le process à l’aide d’un script Python qui utilise mysql-connector-python. L’extension derrière,  SQLTools de VS Code est utilisée pour interroger la base, contrôler les données chargées et exécuter les requêtes SQL. 
 
-# mise en place de l' APi client avec FastApi
+# Mise en place de l' APi client avec FastApi
 
 J’ai dévellopé l'API avec FastAPI afin de créer une couche intermédiaire entre les utilisateurs ou les applications clientes et la base de données MySQL. L’API est organisée autour d’endpoints correspondant aux principales opérations CRUD , GET, POST, PUT et DELETE.
 
@@ -114,3 +114,66 @@ Les requêtes SQL utilisent des requêtes paramétrées avec des placeholders %s
  L’API gère également certains cas d’erreur avec des codes HTTP adaptés, par exemple 404 lorsqu’une personne n’existe pas et 409 lorsqu’une suppression est impossible à cause d’une contrainte d’intégrité référentielle.
 
 Ainsi, l’utilisation d’une API est préférable à un accès direct à la base car elle évite de fournir aux utilisateurs les identifiants MySQL et leur permet uniquement d’effectuer les opérations prévues par l’application. Elle centralise également la validation des données, les règles métier et la gestion des erreurs. Ainsi, le client peut manipuler les données au moyen de requêtes HTTP sans avoir à connaître la structure interne de la base ni à exécuter directement des requêtes SQL.
+
+
+
+# Machine learning
+
+Je décide de supprimer la colonne fnlwgt commme il s'agit ici d'un poids statistique représentatif dans la population et non d'une caractérisque à proprement parler. Je supprime également 'Education' comme 'Education_num' existe déjà.
+
+Pour le preprocessing je décide de diviser les colonnes en trois catégories, numérique, catégorielle et capital auquelle j'applique respectivement un Standardscaler, un Onehotencoder et un MinMaxScaler.
+
+Comme il s'agit ici d'un problème de classe je commence par utiliser un modèle de régression logistique afin de prédire au mieux la probabilité d'appartenir à la 'class' >= 50k annuel.
+
+Pour rappel, les métirques répondent à : 
+
+Accuracy >> Sur toutes mes prédictions combien sont correctes
+Precision >> Parmis les personnes que le modèle prédit, combien gagnent vraiment + de 50K (FP)
+Recall >> Parmis les personnes qui gagnent 50k ou plus, combien le modèle en détecte (FN)
+F1 >> agit comme le compromis entre precison et recall
+
+Pour ce faire je recherche des meilleurs paramètres sur le modèles afin de l'optimiser. Je choisis C en paramètres de validation croisée afin de trouver le niveau de régularisation qui généralise le mieux sur mes données et weight = balanced pour compenser l'inégalité de répartition des classes initiale. 
+J'ai choisi le F1-score comme métrique d'optimisation du GridSearch car ma classe >50K est en effet minoritaire et je voulais trouver un compromis entre Precision et Recall, donc prendre en compte à la fois les faux positifs et les faux négatifs.
+
+
+Les performances obtenues sur les jeux d'entraînement et de test sont très proches, ce qui ne met pas en évidence de surapprentissage. Le modèle présente un rappel élevé sur la classe >50K (0,853 sur le test), indiquant qu'il identifie une grande partie des individus appartenant réellement à cette classe. En revanche, sa précision est plus faible (0,567), traduisant un nombre plus important de faux positifs. Ce déséquilibre entre précision et rappel limite le F1-score à environ 0,68.
+
+De plus, j'ai étudié l'effet d'une modification du seuil de décision sur les performances du modèle, en testant plusieurs valeurs : 0,4, 0,5 et 0,6. Les résultats obtenus montrent des variations relativement faibles des différentes métriques, de l'ordre de quelques centièmes.
+Au regard de la problématique métier, je ne souhaite pas privilégier particulièrement la réduction des faux positifs ou des faux négatifs. J'ai donc choisi de conserver le seuil de décision standard de 0,5.
+Les performances finales du modèle sont ensuite évaluées à l'aide de plusieurs métriques complémentaires : l'accuracy, la précision, le rappel (recall), le ROC-AUC et le F1-score
+
+La régression logistique constitue mon premier modèle de référence. Les résultats obtenus sont contrastés : le modèle identifie correctement une grande partie des individus appartenant réellement à la classe >50K (recall de 85,3 %), mais sa précision de 56,7 % révèle un nombre important de faux positifs. Le F1-score de 68,1 % montre ainsi que le compromis entre précision et rappel reste perfectible avec le seuil de décision retenu de 0,5.
+En parallèle, la ROC-AUC de 0,82 indique que le modèle possède une bonne capacité globale à distinguer les individus >50K des individus <=50K, indépendamment d'un seuil de classification particulier.
+
+Par la suite, à l'aide de la méthode permutation importance je cherche à voir quelles variables influent le plus sur la prédiction. Elle va permettre de faire varier de manière aléatoire une variable plusieurs fois et de mesurer les scores moyens obtenus pour les comparer avec les métrique initiales.
+
+Par la suite, à l’aide de la méthode Permutation Importance, je cherche à identifier les variables qui contribuent le plus aux prédictions du modèle. Elle consiste à mélanger aléatoirement les valeurs d’une variable, plusieurs fois, tout en gardant les autres variables inchangées. Le F1-score est recalculé après chaque permutation puis comparé au F1-score initial. Plus la diminution moyenne du F1-score est importante, plus le modèle dépend de cette variable pour réaliser ses prédictions.
+
+| Rang | Variable         | Importance moyenne | Écart-type |
+|-----:|------------------|--------------------:|-----------:|
+| 1    | marital_status   |              0.1352 |     0.0049 |
+| 2    | education_num    |              0.0481 |     0.0033 |
+| 3    | capital_gain     |              0.0353 |     0.0017 |
+| 4    | occupation       |              0.0284 |     0.0024 |
+| 5    | relationship     |              0.0139 |     0.0023 |
+| 6    | age              |              0.0087 |     0.0018 |
+| 7    | hours_per_week   |              0.0073 |     0.0019 |
+| 8    | capital_loss     |              0.0068 |     0.0004 |
+| 9    | workclass        |              0.0066 |     0.0011 |
+| 10   | sex              |              0.0041 |     0.0016 |
+| 11   | native_country   |              0.0008 |     0.0015 |
+| 12   | race             |              0.0004 |     0.0011 |
+
+Ces résultats indiquent que ces trois premières variables ici sont celles dont la permutation entraîne la plus forte dégradation du F1-score. Elles semblent donc être les variables auxquelles ce modèle de régression logistique accorde le plus d'importance pour effectuer ses prédictions.
+
+Après avoir établi un premier modèle de classification, j'ai choisi de comparer ses performances à celles de modèles d'ensemble basés sur des arbres, notamment le Random Forest et le Gradient Boosting. Ces modèles sont adaptés aux données tabulaires et permettent de modéliser des relations non linéaires ainsi que des interactions entre variables. Ce choix répond également à l'objectif du projet d'identifier les variables contribuant le plus aux prédictions du revenu.
+
+
+
+| `feature_importances_`                            | Permutation Importance                            |
+| ------------------------------------------------- | ------------------------------------------------- |
+| Regarde **comment les arbres ont été construits** | Regarde **les conséquences sur les performances** |
+| Basée sur les séparations des arbres              | Basée sur une métrique choisie                    |
+| Propre aux modèles à arbres                       | Applicable à presque tous les modèles             |
+| Ne mesure pas directement ton F1                  | Peut mesurer directement la baisse du **F1**      |
+| Calculée à partir du modèle entraîné              | Mesurée en perturbant les données                 |
