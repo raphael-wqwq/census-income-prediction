@@ -1,6 +1,9 @@
 # census-income-prediction
 Analyse et prédiction du revenu à partir de critères socio-démographiques sur un échantillon de population Américain.
 
+Problèmatique : 
+Quels facteurs socio-professionnels sont les plus déterminants pour prédire qu'un individu appartienne à la classe de revenu supérieure à 50K$ ?
+
 
 
 ### Etape 1 : Cadrage et premières données 
@@ -119,19 +122,20 @@ Ainsi, l’utilisation d’une API est préférable à un accès direct à la ba
 
 # Machine learning
 
-Je décide de supprimer la colonne fnlwgt commme il s'agit ici d'un poids statistique représentatif dans la population et non d'une caractérisque à proprement parler. Je supprime également 'Education' comme 'Education_num' existe déjà.
+Je décide de supprimer la colonne fnlwgt commme il s'agit ici d'un poids statistique représentatif dans la population et non d'une caractérisque à proprement parler. Je supprime également 'Education' comme 'Education_num' existe déjà. La target 'class' est répartie en 0 (< 50k) à 75,71% et donc en 1 (>= 50K) à 24,29%.
 
-Pour le preprocessing je décide de diviser les colonnes en trois catégories, numérique, catégorielle et capital auquelle j'applique respectivement un Standardscaler, un Onehotencoder et un MinMaxScaler.
+Pour le preprocessing je décide de diviser les colonnes en trois catégories, numérique, catégorielle et capitale (loss & gain)  auxquelles j'applique respectivement un Standardscaler, un Onehotencoder et un MinMaxScaler.
 
+La catégorie capitale est ici à distinguer des variables numériques pour le préprocessing car ici le comportement de ces variables agit presque de manière binaire. C'est-à-dire qu'il y a une importante asymétrie des valeurs, soit 0 soit de très forte valeur. Les traiter avec une scaler standard ne permettrait pas de préserver au mieux la forme de la distribtuion sur ces information à mos sens relativement importante.
 
 Comme il s'agit ici d'un problème de classe je commence par utiliser un modèle de régression logistique afin de prédire au mieux la probabilité d'appartenir à la 'class' >= 50k annuel.
 
-Pour rappel, les métirques répondent à : 
+Pour rappel, les métriques répondent à : 
 
-Accuracy >> Sur toutes mes prédictions combien sont correctes
-Precision >> Parmis les personnes que le modèle prédit, combien gagnent vraiment + de 50K (FP)
-Recall >> Parmis les personnes qui gagnent 50k ou plus, combien le modèle en détecte (FN)
-F1 >> agit comme le compromis entre precison et recall
+**Accuracy** >> Sur toutes mes prédictions combien sont correctes
+**Precision** >> Parmis les personnes que le modèle prédit, combien gagnent vraiment + de 50K (FP)
+**Recall** >> Parmis les personnes qui gagnent 50k ou plus, combien le modèle en détecte (FN)
+**F1** >> agit comme le compromis entre precison et recall
 
 Pour ce faire je recherche des meilleurs paramètres sur le modèles afin de l'optimiser. Je choisis C en paramètres de validation croisée afin de trouver le niveau de régularisation qui généralise le mieux sur mes données et weight = balanced pour compenser l'inégalité de répartition des classes initiale. 
 J'ai choisi le F1-score comme métrique d'optimisation du GridSearch car ma classe >50K est en effet minoritaire et je voulais trouver un compromis entre Precision et Recall, donc prendre en compte à la fois les faux positifs et les faux négatifs.
@@ -195,13 +199,13 @@ Finalement, son F1-score atteint 69,3 % contre 68,1 % pour la régression logist
 
 Le Random Forest obtient également une ROC-AUC de 0,91, indiquant une très bonne capacité globale à discriminer les individus appartenant aux classes >50K et <=50K, indépendamment d'un seuil de classification particulier.
 
-Autrement dit, le ROC-AUC de 0,91 indique plutôt une très bonne capacité de discrimination, si l'on prend au hasard un individu réellement >50K et un individu réellement <=50K, le Random Forest attribuera un score >50K (de probavilité) plus élevé au premier dans environ 91 % des paires.
+Autrement dit, le ROC-AUC de 0,91 indique plutôt une très bonne capacité de discrimination, si l'on prend au hasard un individu réellement >50K et un individu réellement <=50K, le Random Forest attribuera un score >50K (de probabilité) plus élevé au premier dans environ 91 % des paires.
 
 
 
 Ensuite, l'analyse par Permutation Importance, basée sur le F1-score, fait de nouveau ressortir marital_status comme la variable dont la permutation dégrade le plus les performances du modèle, avec une importance moyenne de **0,1074**. Elle est suivie par capital_gain à **0,0816** et education_num à **0,0777**.
 
-On retrouve donc des variables déjà importantes pour la régression logistique, mais avec un ordre et des niveaux d'importance différents. Notamment, capital_gain passe devant education_num avec le Random Forest.
+On retrouve donc des variables déjà importantes pour la régression logistique, mais avec un ordre et des niveaux d'importance différents. Ici, capital_gain passe devant education_num avec le Random Forest.
 
 | Rang | Variable         | Importance moyenne | Écart-type |
 |-----:|------------------|--------------------:|-----------:|
@@ -221,7 +225,7 @@ On retrouve donc des variables déjà importantes pour la régression logistique
 
 
 
-Le Gradient Boosting obtient une accuracy de 87,5 %, une précision de 77,8 %, un recall de 67,8 % et un F1-score de 72,5 %. Par rapport au Random Forest, la précision reste quasiment identique tandis que le recall augmente de 62,5 % à 67,8 %, permettant d'identifier une proportion plus importante des individus appartenant réellement à la classe >50K. Cette amélioration se traduit par un F1-score supérieur à celui du Random Forest (72,5 % contre 69,3 %) et de la régression logistique (68,1 %).
+Pour le Gradient Boosting, celui-ci obtient une accuracy de 87,5 %, une précision de 77,8 %, un recall de 67,8 % et un F1-score de 72,5 %. Par rapport au Random Forest, la précision reste quasiment identique tandis que le recall augmente de 62,5 % à 67,8 %, permettant d'identifier une proportion plus importante des individus appartenant réellement à la classe >50K. Cette amélioration se traduit par un F1-score supérieur à celui du Random Forest (72,5 % contre 69,3 %) et de la régression logistique (68,1 %).
 
 La ROC-AUC de **0,929** indique également une très bonne capacité globale à discriminer les deux classes. Parmi les trois modèles testés, le Gradient Boosting présente ainsi les valeurs les plus élevées de F1-score, d'accuracy et de ROC-AUC sur le jeu de test, tandis que la régression logistique conserve le recall le plus élevé.
 
@@ -253,4 +257,5 @@ Enfin, race présente une importance moyenne légèrement négative (−0,0001),
 
 >> Power BI 
 
-Via querry je change le type et l'informartion de ma colonne class initialemen en texte (<=50K, >50K) pour un type nombre entier (0 ou 1)
+J'ai procédé au nettoyage des données en python, de ce fait avec  power querry je change uniquement le type et l'information de ma colonne class initialement en texte (<=50K, >50K) pour un type nombre entier (0 ou 1) pour faciliter les calculs.
+
