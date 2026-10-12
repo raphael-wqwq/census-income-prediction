@@ -1,4 +1,5 @@
 # census-income-prediction
+
 Analyse et prédiction du revenu à partir de critères socio-démographiques sur un échantillon de population Américain.
 
 Problèmatique : 
@@ -6,20 +7,29 @@ Quels facteurs socio-professionnels sont les plus déterminants pour prédire qu
 
 
 
-### Etape 1 : Cadrage et premières données 
+# Etape 1 : Cadrage et premières données 
 
-# collecte > Les données utilisées proviennent du dataset Adult Census Income, mis à disposition via la plateforme OpenML.
+**Les données utilisées proviennent du dataset Adult Census Income, mis à disposition via la plateforme OpenML.**
+
 Pour assurer une extraction reproductible, j'ai récupéré directement le dataset dans le notebook Python à l'aide de la bibliothèque scikit-learn et de la fonction permettant de charger des datasets depuis OpenML.
 Le processus est automatisé, à chaque exécution du code, les données peuvent être récupérées directement depuis la source sans téléchargement manuel préalable.
 Les données sont ensuite chargées dans un DataFrame pandas afin de permettre leur exploration, leur diagnostic et leur nettoyage.
 
 
-# premier diagnostic 
-> pas de doublons présents
-> 9 colonnes au format category dont trois avec des valeurs manquantes ('work_class", 'occupation', 'native-country'), les colonnes restantes sont au format int64
-> Il y a des valeurs abbérantes potentielles sur les colonnes 'education_num' et 'hours_per_week'
-> La colonne 'fnlwgt' correspond au poids statistique du profil pour une population réelle, c'est une pondération numérique pas une unité, elle permet de se rendre compte de la représentativité de l'observation dans une population de référence.
-> La colonne 'education_num' provient de la variable catégorielle de la colonne 'education' sur les niveaux d'études 
+## Premier diagnostic 
+
+Il n'y a de doublons présents lignes à lignes ou sur une même colonne (subset = ['exemple']).
+
+Le dataset possède 9 colonnes au format catégorie dont trois avec des valeurs manquantes ('work_class", 'occupation', 'native-country') et des colonnes restantes sont au format int64.
+
+Il y a des valeurs abbérantes potentielles sur les colonnes 'education_num' et 'hours_per_week' à vérifier ultérieurement.
+
+
+Breakdown des colonnes : 
+
+> Colonne 'fnlwgt' correspond au poids statistique du profil pour une population réelle, c'est une pondération numérique pas une unité, elle permet de se rendre compte de la représentativité de l'observation dans une population de référence.
+
+> Colonne 'education_num' provient de la variable catégorielle de la colonne 'education' sur les niveaux d'études 
 
 |    N° | Niveau américain       | Équivalent français              |
 | ----: | ---------------------- | -------------------------------- |
@@ -35,9 +45,9 @@ Les données sont ensuite chargées dans un DataFrame pandas afin de permettre l
 |    16 | Doctorate              | Doctorat (Bac+8)                 |
 
 
-> La colonne 'capital_gain' et 'capital_loss' correspondent aux gains ou pertes réalisés suite à la vente d'actifs 
+> Colonne 'capital_gain' et 'capital_loss' correspondent aux gains ou pertes réalisés suite à la vente d'actifs 
 
-> La colonne 'work_class' identifie le type d'employeur, le secteur d'une personnne
+> Colonne 'work_class' identifie le type d'employeur, le secteur d'une personnne
 
 
 | Valeur              | Signification                                                     |
@@ -99,14 +109,16 @@ Les données sont ensuite chargées dans un DataFrame pandas afin de permettre l
 > La colonne 'class' quant à elle indique l'appartenance d'une personne au groupe avec un revenu supérieur ou non à la valeur cible de 50K dollars. Il y a 37109 personnes en dessous de ce seuil pour 11681 au-dessus. Il y a en effet un déséquilibre de classe à l'origine pour les prédictions futures qu'il faudra potenliellement prendre en compte lors de l'examen de ces dernières.
 
 
-# Nettoyage
+## Nettoyage
 Il y a effectivement trois colonnes comportant des valeur 'NaN'. Sur les colonnes 'workclass" et "occupation" notamment. En regardant de plus près ces cas (environ 3400 lignes à peu près 7%) je m'apperçois qu'il est difficile de formuler des hypothèses afin d'enrichir ces instances. De plus les supprimer pourrait par la suite entrainer un biais de séléction des algorythmes lors de la phase d'entraînement. Je décide d'ajouter une variable 'Unknown" à ces colonnes pour pallier à ça.
 
 Concernant la variable native_country, celle-ci représente environ 850 valeurs manquantes, soit une faible proportion du dataset (1,7%). De plus la répartition de classe pour ces valeurs et à peu près du même ordre de grandeur que celle du dataset entier. Je décide supprimer ces observations afin de conserver une variable géographique exploitable sans créer de catégorie artificielle.
 
 Je vérifie les correspondances entre les colonnes 'maritals_status' et 'relationships', à première vue il y a des anomalies de remplissage. La variables 'own-child' semble être un choix par défaut pour des cas particuliers non renseignés ou simplement des erreurs de saisie. Pour les status marritaux suivants : Married-civ-spouse, Married-spouse-absent, Separated, Divorced, Widowed je constate qu'il y a environ 1000 lignes 'relationship' indiquant own-child, soit un enfant à charge. Ces données sont incohérentes au vu du statut marrital, et faire des hypothèses pour un multitudes de cas différentes alors que ce lot ne repésente que 2% du dataset me semble par forcémment cohérent. Je décide ainsi de les supprimer.
 
-# Base de données 
+
+# Etape 2 La base données pour stockage et utilisation
+
 
 En définissant le MCD, j'obtiens deux tables, "Personne" et "Situation", avec une cardinalité de 1:1 de "Situation" à "Personne" et une cardinalité de 1:N dans l'autre sens (une personne pourraît avoir plusieurs situations). Lors de l'écriture du MLD je décide de garder une cardinalité de 1:1 étant donné que ce set de données ne comporte pas de variable temporelle et ne sera pas implémenté avec d'autres par la suite. 
 
@@ -117,14 +129,17 @@ Pour finir, j'ajoute les contraintes et types au MDP.
 ![MPD](docs/mpd.svg)
 
 
-# Structuration de la base relationnelle
+## Structuration de la base relationnelle
 
 Je choisis pour le projet une base MySQL pour le stockage/requêtage comme celle-ci  est un sytème de gestion de base de données répandue, open source adapté à la structuration du projet.
 Cela me permet de mettre en œuvre le modèle relationnel du projet, notamment les clés primaires, les clés étrangères et les jointures entre les tables personne et situation.
 
 Par la suite, je charge les données nettoyées dans MySQL est j'automatise le process à l’aide d’un script Python qui utilise mysql-connector-python. L’extension derrière,  SQLTools de VS Code est utilisée pour interroger la base, contrôler les données chargées et exécuter les requêtes SQL. 
 
-# Mise en place de l' APi client avec FastApi
+
+
+# Etape 3 Mise en place de l' APi client avec FastApi
+
 
 J’ai dévellopé l'API avec FastAPI afin de créer une couche intermédiaire entre les utilisateurs ou les applications clientes et la base de données MySQL. L’API est organisée autour d’endpoints correspondant aux principales opérations CRUD , GET, POST, PUT et DELETE.
 
@@ -138,7 +153,7 @@ Ainsi, l’utilisation d’une API est préférable à un accès direct à la ba
 
 
 
-# Machine learning
+# Etape 4 Analyse prédictive : Machine learning
 
 Je décide de supprimer la colonne fnlwgt commme il s'agit ici d'un poids statistique représentatif dans la population et non d'une caractérisque à proprement parler. Je supprime également 'Education' comme 'Education_num' existe déjà. La target 'class' est répartie en 0 (< 50k) à 75,71% et donc en 1 (>= 50K) à 24,29%.
 
@@ -148,9 +163,11 @@ La catégorie capitale est ici à distinguer des variables numériques pour le p
 
 >> ** EXPLICATION CHOIX DES MODÈLES **
 
+## Régression logistique
+
 Comme il s'agit ici d'un problème de classe je commence par utiliser un modèle de régression logistique afin de prédire au mieux la probabilité d'appartenir à la 'class' >= 50k annuel.
 
-Pour rappel, les métriques répondent à : 
+Les métriques d'évaluation répondent à : 
 
 **Accuracy** >> Sur toutes mes prédictions combien sont correctes
 **Precision** >> Parmis les personnes que le modèle prédit, combien gagnent vraiment + de 50K (FP)
@@ -207,6 +224,7 @@ Après avoir établi un premier modèle de classification, j'ai choisi de compar
 | Calculée à partir du modèle entraîné              | Mesurée en perturbant les données                 |
 
 
+## Le Random forest 
 
 Pour le Random Forest, le GridSearchCV retient le modèle avec les hyperparamètres suivants : max_depth=None, min_samples_leaf=2, min_samples_split=2 et n_estimators=100.
 
@@ -244,6 +262,7 @@ On retrouve donc des variables déjà importantes pour la régression logistique
 
 
 
+## Le Gradient Boosting
 
 Pour le Gradient Boosting, celui-ci obtient une accuracy de 87,5 %, une précision de 77,8 %, un recall de 67,8 % et un F1-score de 72,5 %. Par rapport au Random Forest, la précision reste quasiment identique tandis que le recall augmente de 62,5 % à 67,8 %, permettant d'identifier une proportion plus importante des individus appartenant réellement à la classe >50K. Cette amélioration se traduit par un F1-score supérieur à celui du Random Forest (72,5 % contre 69,3 %) et de la régression logistique (68,1 %).
 
@@ -275,9 +294,9 @@ Enfin, race présente une importance moyenne légèrement négative (−0,0001),
 
 
 
->> Power BI 
+# Etape 5 Analse exploratoire : Power BI
 
-# 1. Préparation des données et création des mesures dans Power BI
+## Préparation des données et création des mesures dans Power BI
 
 J'ai procédé au nettoyage des données en python, de ce fait avec  power querry je change uniquement le type et l'information de ma colonne class initialement en texte (<=50K, >50K) pour un type nombre entier (0 ou 1) pour faciliter les calculs d'agrégation futurs.
 
@@ -286,7 +305,7 @@ Pour construire mon dashboard, je suis parti de deux tables : DIM_Personne, qui 
 
 Les deux tables sont reliées par la colonne id_personne, ce qui me permet de croiser les différentes caractéristiques dans mes visualisations.
 
-# 2. Calcul des proportions de hauts revenus
+## Calcul des proportions de hauts revenus
 
 J'ai créé plusieurs mesures DAX pour calculer la proportion de personnes gagnant plus de 50K.
 L'objectif était de ne pas seulement comparer les effectifs, mais aussi de tenir compte du nombre total d'individus dans chaque catégorie.
@@ -305,7 +324,7 @@ Ces mesures m'ont notamment permis de construire :
 (Pour les comparaisons entre catégories, j'ai utilisé une mesure qui divise le nombre de personnes gagnant plus de 50K par l'effectif total de la catégorie concernée.)
 
 
-# 3. Analyse des gains en capital
+## Analyse des gains en capital
 
 Matrice retour d'investissment moyen : 
 
@@ -316,10 +335,10 @@ Je l'ai utilisée avec les moyennes de capital_gain et capital_loss pour compare
 Cela m'a permis de voir notamment que les personnes gagnant plus de 50K déclarent plus fréquemment des gains en capital, et que leurs montants moyens sont également plus élevés.
 
 
-![Matrice 1](images/matricde1.png)
+![Matrice 1](images/matrice1.png)
 
 
-# 4. Analyse multivariée
+## Analyse multivariée
 
 Après avoir étudié les variables séparément, j'ai voulu aller plus loin en analysant plusieurs caractéristiques simultanément.
 
@@ -347,7 +366,7 @@ Cela permet de vérifier rapidement sur combien de personnes repose chaque résu
 ![Matrice 2](images/matrice2.png)
 
 
-# 5. Intégration des résultats de machine learning
+## Intégration des résultats de machine learning
 
 Pour finir, j'ai ajouté dans Power BI les résultats obtenus avec mes trois modèles : régression logistique, Random Forest et Gradient Boosting.
 
@@ -363,7 +382,61 @@ L'objectif global du dashboard est donc de passer d'une analyse individuelle des
 ![Graphique-Performances](images/perf_models.png)
 
 
+Récapitulatif des mesures créées :
 
+### Les principales mesures DAX utilisées
+
+| Mesure DAX | Utilisation |
+|---|---|
+| `Nombre de revenus ≤ 50K` | Compter les individus dont le revenu annuel est inférieur ou égal à 50K. |
+| `Nombre de revenus > 50K` | Compter les individus dont le revenu annuel dépasse 50K. |
+| `% Revenus > 50K` | Calculer la proportion de hauts revenus par rapport à l'ensemble sélectionné. |
+| `% Revenus > 50K par statut matrimonial` | Comparer la proportion de hauts revenus selon la situation matrimoniale. |
+| `% Revenus > 50K par âge` | Observer l'évolution de la proportion de hauts revenus selon l'âge. |
+| `% Revenus > 50K par croisement` | Calculer la proportion de hauts revenus pour chaque combinaison de caractéristiques dans la matrice. |
+| `% Gains en capital positifs` | Calculer la proportion d'individus ayant déclaré un gain en capital supérieur à zéro. |
+| `Gain moyen en capital` / `Perte moyenne en capital` | Comparer les montants moyens des gains et des pertes en capital selon la classe de revenu. |
+| `Nombre d'individus` | Compter les individus distincts, notamment pour vérifier les effectifs derrière les pourcentages affichés dans la matrice. |
+
+
+
+
+Suite à ces différentes analyses, j'ai pu observer de nombreuses limitations du jeu de données. Celles-ci ne permettent pas d'établir de corrélation certaines sur l'appartenance d'un individu à la classe de revenu > 50K selon les caractériques qu'il présente. En revanche des associations statistiques de plusieurs variables sont ressorties, notammment 
+
+## Conclusion de l'analyse exploratoire et limites du jeu de données
+
+
+
+À travers les différentes analyses réalisées sur Power BI, j'ai pu mettre en évidence plusieurs caractéristiques associées à l'appartenance à la classe de revenu annuel supérieure à 50K.
+
+Le **niveau d'études** semble jouer un rôle important : plus celui-ci est élevé, plus la proportion de personnes gagnant plus de 50K a tendance à augmenter. La **catégorie professionnelle** présente également des différences marquées, certaines professions, notamment les métiers spécialisés et les postes de direction, étant davantage représentées parmi les hauts revenus.
+
+Le **statut matrimonial** ressort aussi comme un facteur particulièrement associé au niveau de revenu. Les personnes mariées présentent une proportion de hauts revenus nettement supérieure à celle des personnes célibataires ou divorcées.
+
+D'autres tendances ont également été observées concernant l'âge, le nombre d'heures travaillées et les gains en capital. Ces résultats montrent que plusieurs caractéristiques peuvent être associées au revenu d'un individu et qu'il est intéressant de les étudier ensemble plutôt que séparément.
+
+La matrice d'analyse croisée m'a justement permis d'approfondir ces observations. Elle montre notamment qu'à niveau d'études équivalent, la proportion de hauts revenus peut varier sensiblement selon la profession, la situation matrimoniale et le sexe.
+
+
+
+
+Ces résultats doivent toutefois être interprétés avec prudence, car le jeu de données présente plusieurs limites :
+
+- **Faible représentation des niveaux d'études les plus bas :** certaines catégories comptent peu d'individus, ce qui rend les résultats moins fiables pour ces profils.
+- **Répartition inégale des catégories professionnelles :** certaines professions sont beaucoup plus représentées que d'autres, ce qui limite la portée de certaines comparaisons.
+- **Déséquilibre entre les sexes :** les hommes représentent environ deux tiers de l'échantillon, contre un tiers de femmes.
+- **Effectifs faibles dans certains croisements :** certaines combinaisons présentent des proportions très élevées, parfois 100 %, mais peuvent reposer sur seulement quelques observations.
+- **Ancienneté des données :** le jeu de données repose sur des informations issues du recensement américain de 1994. Les résultats ne reflètent donc pas nécessairement la situation actuelle.
+- **Contexte géographique limité :** les données concernent principalement la population américaine et ne peuvent pas être directement généralisées à d'autres pays.
+- **Variables explicatives incomplètes :** certaines informations susceptibles d'être associées au revenu, comme l'expérience professionnelle, l'ancienneté, la localisation précise ou le secteur d'activité détaillé, ne sont pas disponibles.
+
+### Bilan
+
+Malgré ces limites, cette analyse exploratoire m'a permis de mieux comprendre la structure du jeu de données et d'identifier les variables les plus intéressantes à étudier.
+
+Les résultats mettent en évidence des **associations statistiques**, mais ne permettent pas d'affirmer qu'une caractéristique entraîne directement un revenu plus élevé. D'autres facteurs, présents ou absents du jeu de données, peuvent intervenir.
+
+Ces observations viennent compléter les résultats de mes modèles de machine learning, notamment les analyses d'importance des variables, et permettent de mieux interpréter les facteurs utilisés pour prédire l'appartenance à la classe de revenu supérieure à 50K.
 
 
 >> pistes d'améliirations
