@@ -17,9 +17,9 @@ Les données sont ensuite chargées dans un DataFrame pandas afin de permettre l
 # premier diagnostic 
 > pas de doublons présents
 > 9 colonnes au format category dont trois avec des valeurs manquantes ('work_class", 'occupation', 'native-country'), les colonnes restantes sont au format int64
-> des valeurs abbérantes potentielles sur les colonnes 'education_num' et 'hours_per_week'
-> la colonne 'fnlwgt' correspond au poids statistique du profil pour une population réelle, c'est une pondération numérique pas une unité, elle permet de se rendre compte de la représentativité de l'observation dans une population de référence.
-> la colonne 'education_num' provient de la variable catégorielle de la colonne 'education' sur les niveaux d'études 
+> Il y a des valeurs abbérantes potentielles sur les colonnes 'education_num' et 'hours_per_week'
+> La colonne 'fnlwgt' correspond au poids statistique du profil pour une population réelle, c'est une pondération numérique pas une unité, elle permet de se rendre compte de la représentativité de l'observation dans une population de référence.
+> La colonne 'education_num' provient de la variable catégorielle de la colonne 'education' sur les niveaux d'études 
 
 |    N° | Niveau américain       | Équivalent français              |
 | ----: | ---------------------- | -------------------------------- |
@@ -35,9 +35,9 @@ Les données sont ensuite chargées dans un DataFrame pandas afin de permettre l
 |    16 | Doctorate              | Doctorat (Bac+8)                 |
 
 
-> colonne 'capital_gain' et 'capital_loss' correspondent aux gains ou pertes réalisés suite à la vente d'actifs 
-> la colonne 'class' identifie les personnes avec un revenu annuel inférieur ou supérieur à 50k/an
-> la colonne 'work_class' identifie le type d'employeur, le secteur d'une personnne
+> La colonne 'capital_gain' et 'capital_loss' correspondent aux gains ou pertes réalisés suite à la vente d'actifs 
+
+> La colonne 'work_class' identifie le type d'employeur, le secteur d'une personnne
 
 
 | Valeur              | Signification                                                     |
@@ -52,9 +52,19 @@ Les données sont ensuite chargées dans un DataFrame pandas afin de permettre l
 | `Never-worked`      | N'a jamais travaillé                                              |
 | `NaN` (2 795 lignes)| Valeur manquante — non renseigné par l'individu                   |
 
-> la colonne maritals_status comporte une variable nommée 'Married-AF_spouse' qui signifie marié(e) à un(e) membre des forces armées
+> Colonne maritals_status 
 
-> la colonne 'occupation' indique effectivement le métier 
+| Catégorie                 | Signifiaction                                                                                                          |
+|---------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| `Married-civ-spouse`      | Individu marié dont le conjoint est présent dans le foyer.                                                              |
+| `Never-married`           | Individu n'ayant jamais été marié.                                                                                      |
+| `Divorced`                | Individu dont le mariage s'est terminé par un divorce.                                                                  |
+| `Separated`               | Individu toujours légalement marié mais séparé de son conjoint.                                                         |
+| `Widowed`                 | Individu dont le conjoint est décédé.                                                                                   |
+| `Married-spouse-absent`   | Individu marié dont le conjoint est absent du foyer recensé. La durée et la raison de cette absence est hypothétique.   |
+| `Married-AF-spouse`       | Individu marié dont le conjoint appartient aux forces armées.                                                           |
+
+> Colonne 'occupation' inteprétation : 
 
 | Occupation        | Signification                    |
 | ----------------- | ------------------------------------------- |
@@ -74,11 +84,19 @@ Les données sont ensuite chargées dans un DataFrame pandas afin de permettre l
 | Armed-Forces      | Forces armées                               |
 
 
-> la colonne 'relationship' indique la relation de l'individu avec son foyer ou sa famille, 'other_relative' peut représenter la famille élargie, la belle famille 
+> Colonne 'relationship' indique la relation de l'individu avec son foyer ou sa famille
+
+| Catégorie          | Interprétation                                                                                           |
+|--------------------|----------------------------------------------------------------------------------------------------------|
+| `Husband`          | Homme marié identifié comme époux au sein du foyer recensé.                                              |
+| `Wife`             | Femme mariée identifiée comme épouse au sein du foyer recensé.                                           |
+| `Own-child`        | Enfant de la personne de référence du foyer, quel que soit son âge.                                      |
+| `Not-in-family`    | Individu vivant dans un foyer sans lien familial avec la personne de référence, ou vivant seul.          |
+| `Unmarried`        | Individu non marié ayant un lien familial avec la personne de référence autre que conjoint ou enfant.    |
+| `Other-relative`   | Autre membre de la famille ne correspondant pas aux catégories précédentes. (ex : belle famille)                             |
 
 
-
-> la colonne 'class' quant à elle indique l'appartenance d'une personne au groupe avec un revenu supérieur ou non à la valeur cible de 50K dollars. Il y a 37109 personnes en dessous de ce seuil pour 11681 au-dessus. Il y a en effet un déséquilibre de classe à l'origine pour les prédictions futures qu'il faudra potenliellement prendre en compte lors de l'examen de ces dernières.
+> La colonne 'class' quant à elle indique l'appartenance d'une personne au groupe avec un revenu supérieur ou non à la valeur cible de 50K dollars. Il y a 37109 personnes en dessous de ce seuil pour 11681 au-dessus. Il y a en effet un déséquilibre de classe à l'origine pour les prédictions futures qu'il faudra potenliellement prendre en compte lors de l'examen de ces dernières.
 
 
 # Nettoyage
@@ -128,6 +146,8 @@ Pour le preprocessing je décide de diviser les colonnes en trois catégories, n
 
 La catégorie capitale est ici à distinguer des variables numériques pour le préprocessing car ici le comportement de ces variables agit presque de manière binaire. C'est-à-dire qu'il y a une importante asymétrie des valeurs, soit 0 soit de très forte valeur. Les traiter avec une scaler standard ne permettrait pas de préserver au mieux la forme de la distribtuion sur ces information à mos sens relativement importante.
 
+>> ** EXPLICATION CHOIX DES MODÈLES **
+
 Comme il s'agit ici d'un problème de classe je commence par utiliser un modèle de régression logistique afin de prédire au mieux la probabilité d'appartenir à la 'class' >= 50k annuel.
 
 Pour rappel, les métriques répondent à : 
@@ -146,7 +166,7 @@ Les performances obtenues sur les jeux d'entraînement et de test sont très pro
 Les résultats obtenus sont contrastés : le modèle identifie correctement une grande partie des individus appartenant réellement à la classe >50K, recall de **85,3 %**, mais sa précision de **56,7 %** révèle un nombre important de faux positifs. Le F1-score de **68,1 %** montre ainsi que le compromis entre précision et rappel reste perfectible avec le seuil de décision de 0,5.
 
 De plus, j'ai étudié l'effet d'une modification du seuil de décision sur les performances du modèle, en testant plusieurs valeurs : 0,4, 0,5 et 0,6. Les résultats obtenus montrent des variations relativement faibles des différentes métriques, de l'ordre de quelques centièmes.
-Au regard de la problématique métier, je ne souhaite pas privilégier particulièrement la réduction des faux positifs ou des faux négatifs. J'ai donc choisi de conserver le seuil de décision standard de **0,5**.
+Au regard de la problématique métier, je ne souhaite pas privilégier  la réduction des faux positifs ou des faux négatifs. J'ai donc choisi de conserver le seuil de décision standard de **0,5**.
 
 En parallèle, la ROC-AUC de **0,9** indique que le modèle possède une bonne capacité globale à distinguer les individus >50K des individus <=50K, indépendamment d'un seuil de classification particulier.
 
@@ -257,5 +277,93 @@ Enfin, race présente une importance moyenne légèrement négative (−0,0001),
 
 >> Power BI 
 
-J'ai procédé au nettoyage des données en python, de ce fait avec  power querry je change uniquement le type et l'information de ma colonne class initialement en texte (<=50K, >50K) pour un type nombre entier (0 ou 1) pour faciliter les calculs.
+# 1. Préparation des données et création des mesures dans Power BI
 
+J'ai procédé au nettoyage des données en python, de ce fait avec  power querry je change uniquement le type et l'information de ma colonne class initialement en texte (<=50K, >50K) pour un type nombre entier (0 ou 1) pour faciliter les calculs d'agrégation futurs.
+
+
+Pour construire mon dashboard, je suis parti de deux tables : DIM_Personne, qui contient les informations personnelles des individus, et FACT_Situation, qui regroupe notamment leur situation professionnelle, familiale et leur classe de revenu.
+
+Les deux tables sont reliées par la colonne id_personne, ce qui me permet de croiser les différentes caractéristiques dans mes visualisations.
+
+# 2. Calcul des proportions de hauts revenus
+
+J'ai créé plusieurs mesures DAX pour calculer la proportion de personnes gagnant plus de 50K.
+L'objectif était de ne pas seulement comparer les effectifs, mais aussi de tenir compte du nombre total d'individus dans chaque catégorie.
+
+Ces mesures m'ont notamment permis de construire :
+
+- Un graphique montrant l'évolution de la proportion de hauts revenus selon l'âge.
+
+- Des graphiques comparant les revenus selon le statut matrimonial et le sexe.
+
+- Un tableau analysant le lien entre le nombre d'heures travaillées et le niveau de revenu.
+
+- Une matrice croisant plusieurs caractéristiques.
+
+
+(Pour les comparaisons entre catégories, j'ai utilisé une mesure qui divise le nombre de personnes gagnant plus de 50K par l'effectif total de la catégorie concernée.)
+
+
+# 3. Analyse des gains en capital
+
+Matrice retour d'investissment moyen : 
+
+J'ai également créé une mesure % Gain capital positif afin de calculer la proportion d'individus ayant déclaré un gain en capital supérieur à zéro.
+
+Je l'ai utilisée avec les moyennes de capital_gain et capital_loss pour comparer les deux classes de revenus.
+
+Cela m'a permis de voir notamment que les personnes gagnant plus de 50K déclarent plus fréquemment des gains en capital, et que leurs montants moyens sont également plus élevés.
+
+
+![Matrice 1](images/matricde1.png)
+
+
+# 4. Analyse multivariée
+
+Après avoir étudié les variables séparément, j'ai voulu aller plus loin en analysant plusieurs caractéristiques simultanément.
+
+J'ai donc créé une mesure % > 50K croisement, qui calcule la proportion de hauts revenus à l'intérieur de chaque combinaison de catégories.
+
+Contrairement à ma première mesure (> 50k) utilisant ALLSELECTED, cette mesure conserve les filtres propres à chaque cellule de la matrice.
+
+J'ai ensuite construit une matrice avec :
+
+- Les professions (occupation) et les statuts matrimoniaux (marital_status) en lignes.
+- Les niveaux d'études (education) en colonnes.
+- Le pourcentage de personnes gagnant plus de 50K comme valeur.
+
+
+Cette visualisation complète les graphiques précédents : elle permet notamment de constater qu'à diplôme équivalent, la proportion de hauts revenus peut varier sensiblement selon la profession et la situation matrimoniale.
+
+Certaines combinaisons de la matrice affichent des proportions très élevées, parfois même 100 %. Cependant, ces résultats peuvent reposer sur un faible nombre d'individus.
+
+Pour éviter de les interpréter trop rapidement, j'ai créé une mesure Nombre d'individus à l'aide de DISTINCTCOUNT.
+
+J'ai ensuite créé une page d'info-bulle personnalisée contenant deux cartes : l'une affiche le pourcentage de hauts revenus et l'autre le nombre d'individus correspondant à la cellule survolée.
+
+Cela permet de vérifier rapidement sur combien de personnes repose chaque résultat. 100
+
+![Matrice 2](images/matrice2.png)
+
+
+# 5. Intégration des résultats de machine learning
+
+Pour finir, j'ai ajouté dans Power BI les résultats obtenus avec mes trois modèles : régression logistique, Random Forest et Gradient Boosting.
+
+J'ai créé des tables spécifiques pour représenter les importances des variables calculées par permutation, ainsi qu'une table regroupant les performances des modèles (F1-score et ROC-AUC).
+
+Ces visualisations me permettent de comparer les modèles et de rapprocher les résultats de l'analyse descriptive de ceux de l'analyse prédictive.
+
+L'objectif global du dashboard est donc de passer d'une analyse individuelle des caractéristiques à une analyse croisée, puis de confronter ces observations aux résultats des modèles de machine learning.
+
+
+![Graphique-Importances](images/importances_models.png)
+
+![Graphique-Performances](images/perf_models.png)
+
+
+
+
+
+>> pistes d'améliirations
