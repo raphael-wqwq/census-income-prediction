@@ -76,7 +76,7 @@ def get_personne(id_pers: int):
     connexion = get_connexion()
     cursor = connexion.cursor(dictionary=True)
 
-# mysqlconnector fait le lien entrre la requête et la valeur saisie (id_pers) pour la placer sur le placeholder %s
+# mysqlconnector fait le lien entre la requête et la valeur saisie (id_pers) pour la placer sur le placeholder %s
     cursor.execute("""
         SELECT *
         FROM personne

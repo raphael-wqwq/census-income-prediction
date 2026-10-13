@@ -18,7 +18,7 @@ Les données sont ensuite chargées dans un DataFrame pandas afin de permettre l
 
 ## Premier diagnostic 
 
-Il n'y a de doublons présents lignes à lignes ou sur une même colonne (subset = ['exemple']).
+Il n'y a de doublons présents lignes à lignes ou sur une même colonne (subset =['exemple']).
 
 Le dataset possède 9 colonnes au format catégorie dont trois avec des valeurs manquantes ('work_class", 'occupation', 'native-country') et des colonnes restantes sont au format int64.
 
@@ -33,16 +33,16 @@ Breakdown des colonnes :
 
 |    N° | Niveau américain       | Équivalent français              |
 | ----: | ---------------------- | -------------------------------- |
-|     1 | Preschool              | Maternelle                       |
-|   2–4 | 1st-4th → 7th-8th      | CP → 4e                          |
-|   5–8 | 9th → 12th             | 3e → Terminale                   |
-|     9 | HS-grad                | Fin du secondaire                |
-|    10 | Some-college           | Supérieur sans diplôme           |
-| 11–12 | Assoc-voc / Assoc-acdm | Bac+2                            |
-|    13 | Bachelors              | Bac+3/4                          |
-|    14 | Masters                | Bac+5                            |
-|    15 | Prof-school            | Formation spécialisée supérieure |
-|    16 | Doctorate              | Doctorat (Bac+8)                 |
+|     1 | `Preschool`            | Maternelle                       |
+|   2–4 | `1st-4th → 7th-8th`    | CP → 4e                          |
+|   5–8 | `9th → 12th`           | 3e → Terminale                   |
+|     9 | `HS-grad`              | Fin du secondaire                |
+|    10 | `Some-college`         | Supérieur sans diplôme           |
+| 11–12 | `Assoc-voc/Assoc-acdm` | Bac+2                            |
+|    13 | `Bachelors`            | Bac+3/4                          |
+|    14 | `Masters`              | Bac+5                            |
+|    15 | `Prof-school`          | Formation spécialisée supérieure |
+|    16 | `Doctorate`            | Doctorat (Bac+8)                 |
 
 
 > Colonne 'capital_gain' et 'capital_loss' correspondent aux gains ou pertes réalisés suite à la vente d'actifs 
@@ -74,27 +74,27 @@ Breakdown des colonnes :
 | `Married-spouse-absent`   | Individu marié dont le conjoint est absent du foyer recensé. La durée et la raison de cette absence est hypothétique.   |
 | `Married-AF-spouse`       | Individu marié dont le conjoint appartient aux forces armées.                                                           |
 
-> Colonne 'occupation' inteprétation : 
+> Colonne 'occupation' 
 
-| Occupation        | Signification                    |
-| ----------------- | ------------------------------------------- |
-| Prof-specialty    | Profession spécialisée / intellectuelle     |
-| Craft-repair      | Artisanat, réparation et métiers techniques |
-| Exec-managerial   | Cadre dirigeant / management                |
-| Adm-clerical      | Administration / travail de bureau          |
-| Sales             | Vente / commercial                          |
-| Other-service     | Autres métiers de services                  |
-| Machine-op-inspct | Opérateur de machine / contrôle             |
-| Transport-moving  | Transport et manutention                    |
-| Handlers-cleaners | Manutention / nettoyage                     |
-| Farming-fishing   | Agriculture / pêche                         |
-| Tech-support      | Support technique / informatique            |
-| Protective-serv   | Services de protection / sécurité           |
-| Priv-house-serv   | Services à domicile                         |
-| Armed-Forces      | Forces armées                               |
+| Occupation         | Signification                    |
+| -----------------  | ------------------------------------------- |
+| `Prof-specialty`   | Profession spécialisée / intellectuelle     |
+| `Craft-repair`     | Artisanat, réparation et métiers techniques |
+| `Exec-managerial`  | Cadre dirigeant / management                |
+| `Adm-clerical`     | Administration / travail de bureau          |
+| `Sales`            | Vente / commercial                          |
+| `Other-service`    | Autres métiers de services                  |
+| `Machine-op-inspct`| Opérateur de machine / contrôle             |
+| `Transport-moving` | Transport et manutention                    |
+| `Handlers-cleaners`| Manutention / nettoyage                     |
+| `Farming-fishing`  | Agriculture / pêche                         |
+| `Tech-support`     | Support technique / informatique            |
+| `Protective-serv`  | Services de protection / sécurité           |
+| `Priv-house-serv`  | Services à domicile                         |
+| `Armed-Forces`     | Forces armées                               |
 
 
-> Colonne 'relationship' indique la relation de l'individu avec son foyer ou sa famille
+> Colonne 'relationship' indique la relation de l'individu avec la prersonne de référence du foyer
 
 | Catégorie          | Interprétation                                                                                           |
 |--------------------|----------------------------------------------------------------------------------------------------------|
@@ -110,19 +110,38 @@ Breakdown des colonnes :
 
 
 ## Nettoyage
-Il y a effectivement trois colonnes comportant des valeur 'NaN'. Sur les colonnes 'workclass" et "occupation" notamment. En regardant de plus près ces cas (environ 3400 lignes à peu près 7%) je m'apperçois qu'il est difficile de formuler des hypothèses afin d'enrichir ces instances. De plus les supprimer pourrait par la suite entrainer un biais de séléction des algorythmes lors de la phase d'entraînement. Je décide d'ajouter une variable 'Unknown" à ces colonnes pour pallier à ça.
 
-Concernant la variable native_country, celle-ci représente environ 850 valeurs manquantes, soit une faible proportion du dataset (1,7%). De plus la répartition de classe pour ces valeurs et à peu près du même ordre de grandeur que celle du dataset entier. Je décide supprimer ces observations afin de conserver une variable géographique exploitable sans créer de catégorie artificielle.
+Il y a effectivement trois colonnes comportant des valeur NaN, 'native_country', 'workclass" et "occupation". En regardant de plus près ces deux dernières, elles représentent en cumulé environ 3400 lignes à peu près 7% du dataset. Je m'apperçois qu'il est difficile de formuler des hypothèses afin d'enrichir ces instances. De plus les supprimer pourrait par la suite entrainer un biais de séléction des algorithmes lors de la phase d'entraînement. Je décide d'ajouter une variable "Unknown" à ces colonnes pour pallier à ça. 
 
-Je vérifie les correspondances entre les colonnes 'maritals_status' et 'relationships', à première vue il y a des anomalies de remplissage. La variables 'own-child' semble être un choix par défaut pour des cas particuliers non renseignés ou simplement des erreurs de saisie. Pour les status marritaux suivants : Married-civ-spouse, Married-spouse-absent, Separated, Divorced, Widowed je constate qu'il y a environ 1000 lignes 'relationship' indiquant own-child, soit un enfant à charge. Ces données sont incohérentes au vu du statut marrital, et faire des hypothèses pour un multitudes de cas différentes alors que ce lot ne repésente que 2% du dataset me semble par forcémment cohérent. Je décide ainsi de les supprimer.
-
-
-# Etape 2 La base données pour stockage et utilisation
+Concernant la variable native_country, celle-ci représente environ 850 valeurs manquantes, soit une faible proportion du dataset (1,7%). De plus la répartition de classe pour ces valeurs et à peu près du même ordre de grandeur que celle du dataset entier. Compte tenu de leur faible proportion et de l'absence de déséquilibre majeur observé sur la variable cible, j'ai choisi de supprimer ces observations afin de conserver une variable géographique exploitable, sans introduire de catégorie artificielle comme « Unknown ».
 
 
-En définissant le MCD, j'obtiens deux tables, "Personne" et "Situation", avec une cardinalité de 1:1 de "Situation" à "Personne" et une cardinalité de 1:N dans l'autre sens (une personne pourraît avoir plusieurs situations). Lors de l'écriture du MLD je décide de garder une cardinalité de 1:1 étant donné que ce set de données ne comporte pas de variable temporelle et ne sera pas implémenté avec d'autres par la suite. 
+### Limite liée au nettoyage des données
 
-Pour finir, j'ajoute les contraintes et types au MDP.
+Lors de la préparation du jeu de données, j'ai identifié 831 observations présentant une combinaison inhabituelle entre les variables `marital_status` et `relationship`, notamment des individus ayant le statut `Own-child` tout en étant mariés, divorcés, séparés ou veufs.
+
+J'ai initialmeent pris le parti de supprimer ces observations, car je les considérais comme des incohérences de saisie.
+
+Cependant, après une analyse complémentaire plus tard dans mon projet j'ai pu constater que ces combinaisons n'étaient pas nécessairement erronées. La catégorie `Own-child` désigne en effet un enfant de la personne de référence du foyer, indépendamment de son âge ou de sa situation matrimoniale.
+
+Cette suppression constitue une limite méthodologique de mon projet. Bien que ces observations représentent une faible proportion du jeu de données initial (environ 1,7 %), leur retrait peut avoir modifié la représentation de certains profils et influencé les résultats associés aux variables familiales.
+
+J'ai choisi de conserver les analyses réalisées sur le jeu de données nettoyé, tout en signalant cette limite afin de garantir la transparence de ma démarche.
+
+
+# Étape 2  Création de la base de données pour le stockage et l'exploitation
+
+Lors de la conception du Modèle Conceptuel de Données (MCD), j'ai identifié deux entités : `Personne` et `Situation`.
+
+J'ai initialement envisagé une relation **1:N**, dans laquelle une personne pourrait être associée à plusieurs situations, par exemple si ses caractéristiques professionnelles ou personnelles évoluaient au fil du temps.
+
+Cependant, le jeu de données ne contient aucune dimension temporelle permettant de suivre ces évolutions. Chaque individu n'est représenté que par une seule observation.
+
+J'ai donc choisi de retenir une relation **1:1** dans le Modèle Logique de Données (MLD), chaque personne étant associée à une seule situation. Ce choix permet de conserver une structure simple et adaptée aux besoins du projet.
+
+Enfin, j'ai défini les types de données ainsi que les contraintes d'intégrité dans le Modèle Physique de Données (MPD), présenté ci-dessous.
+
+Pour finir, j'ajoute les contraintes et types au MDP ci-dessous :
 
 ![MCD](docs/mcd.svg)
 ![MLD](docs/mld.svg)
@@ -131,41 +150,50 @@ Pour finir, j'ajoute les contraintes et types au MDP.
 
 ## Structuration de la base relationnelle
 
-Je choisis pour le projet une base MySQL pour le stockage/requêtage comme celle-ci  est un sytème de gestion de base de données répandue, open source adapté à la structuration du projet.
-Cela me permet de mettre en œuvre le modèle relationnel du projet, notamment les clés primaires, les clés étrangères et les jointures entre les tables personne et situation.
+Pour ce projet, j'ai choisi **MySQL** comme système de gestion de base de données relationnelle (SGBDR). Il s'agit d'une solution largement utilisée, open source et adaptée aux besoins de stockage et d'interrogation des données de mon projet.
 
-Par la suite, je charge les données nettoyées dans MySQL est j'automatise le process à l’aide d’un script Python qui utilise mysql-connector-python. L’extension derrière,  SQLTools de VS Code est utilisée pour interroger la base, contrôler les données chargées et exécuter les requêtes SQL. 
+Ce choix me permet de mettre en pratique les principes du modèle relationnel, notamment la définition des clés primaires et étrangères, les contraintes d'intégrité ainsi que les jointures entre les tables `Personne` et `Situation`.
 
+Une fois les données nettoyées, je les importe dans MySQL et j'automatise leur chargement à l'aide d'un script Python utilisant la bibliothèque `mysql-connector-python`.
+
+Enfin, j'utilise l'extension **SQLTools de VS Code** pour interroger la base, vérifier la cohérence des données importées et exécuter différentes requêtes SQL.
 
 
 # Etape 3 Mise en place de l' APi client avec FastApi
 
 
-J’ai dévellopé l'API avec FastAPI afin de créer une couche intermédiaire entre les utilisateurs ou les applications clientes et la base de données MySQL. L’API est organisée autour d’endpoints correspondant aux principales opérations CRUD , GET, POST, PUT et DELETE.
+J’ai dévellopé l'API avec FastAPI afin de créer une couche intermédiaire entre les applications clientes et la base de données MySQL. Elle permet d'accéder aux données et de les manipuler à travers des requêtes HTTP, sans avoir à interagir directement avec la base. L’API est organisée autour d’endpoints correspondant aux principales opérations CRUD , GET, POST, PUT et DELETE.
 
 Les données reçues par l’API sont validées à l’aide de modèles Pydantic, qui permettent de contrôler les types attendus avant leur traitement. Les identifiants transmis dans les routes sont également typés, par exemple id_pers: int.
 
 Les requêtes SQL utilisent des requêtes paramétrées avec des placeholders %s, plutôt que de construire directement les requêtes à partir des valeurs reçues. Cela permet de séparer les instructions SQL des données fournies par l’utilisateur et contribue à prévenir les injections SQL.
 
- L’API gère également certains cas d’erreur avec des codes HTTP adaptés, par exemple 404 lorsqu’une personne n’existe pas et 409 lorsqu’une suppression est impossible à cause d’une contrainte d’intégrité référentielle.
+L’API gère également certains cas d’erreur avec des codes HTTP adaptés, par exemple 404 lorsqu’une personne n’existe pas et 409 lorsqu’une suppression est impossible à cause d’une contrainte d’intégrité référentielle.
 
 Ainsi, l’utilisation d’une API est préférable à un accès direct à la base car elle évite de fournir aux utilisateurs les identifiants MySQL et leur permet uniquement d’effectuer les opérations prévues par l’application. Elle centralise également la validation des données, les règles métier et la gestion des erreurs. Ainsi, le client peut manipuler les données au moyen de requêtes HTTP sans avoir à connaître la structure interne de la base ni à exécuter directement des requêtes SQL.
 
+### Perspectives d'amélioration de l'API 
+
+Afin de renforcer la sécurité et la fiabilité de l'API, plusieurs améliorations pourraient être envisagées, notamment la mise en place d'une **authentification**, d'une **gestion des rôles et des permissions** pour mieux contrôler l'accès aux différentes opérations, ainsi que de **tests automatisés** et d'un système de journalisation des erreurs.
+
+Ces fonctionnalités permettraient de rendre l'API plus adaptée à une utilisation en production.
 
 
 # Etape 4 Analyse prédictive : Machine learning
 
-Je décide de supprimer la colonne fnlwgt commme il s'agit ici d'un poids statistique représentatif dans la population et non d'une caractérisque à proprement parler. Je supprime également 'Education' comme 'Education_num' existe déjà. La target 'class' est répartie en 0 (< 50k) à 75,71% et donc en 1 (>= 50K) à 24,29%.
+Je décide de supprimer la colonne fnlwgt commme il s'agit ici d'un poids statistique représentatif dans la population et non d'une caractérisque à proprement parler. Je supprime également 'Education' comme 'Education_num' est déjà encodé. La target 'class' est répartie en 0 (< 50k) à 75,71% et donc en 1 (>= 50K) à 24,29%. J'utiliserai donc un solit stratifié.
 
 Pour le preprocessing je décide de diviser les colonnes en trois catégories, numérique, catégorielle et capitale (loss & gain)  auxquelles j'applique respectivement un Standardscaler, un Onehotencoder et un MinMaxScaler.
 
-La catégorie capitale est ici à distinguer des variables numériques pour le préprocessing car ici le comportement de ces variables agit presque de manière binaire. C'est-à-dire qu'il y a une importante asymétrie des valeurs, soit 0 soit de très forte valeur. Les traiter avec une scaler standard ne permettrait pas de préserver au mieux la forme de la distribtuion sur ces information à mos sens relativement importante.
+La catégorie capitale est ici à distinguer des variables numériques classiques pour le préprocessing car ici le comportement de ces variables agit presque de manière binaire. Ces variables sont traitées à part car leur distribution est très asymétrique : la grande majorité des valeurs vaut 0, les autres étant très élevées. Le MinMaxScaler va me permettre de conserver les zéros à 0 et ramèner les valeurs sur une échelle [0, 1], ce qui respecte ce comportement quasi binaire, alors que la standardisation décalerait les zéros vers une valeur négative sans signification. 
 
 >> ** EXPLICATION CHOIX DES MODÈLES **
+Context : c'est ici un problème de classification binaire supervisée.
+
 
 ## Régression logistique
 
-Comme il s'agit ici d'un problème de classe je commence par utiliser un modèle de régression logistique afin de prédire au mieux la probabilité d'appartenir à la 'class' >= 50k annuel.
+Comme il s'agit ici d'un problème de classe je commence par utiliser un modèle de régression logistique afin de prédire au mieux la probabilité d'appartenir à la 'class' >= 50k annuel. C'est un modèle simple, facilement interprétable qui sera mon **modèle de référence** (baseline).
 
 Les métriques d'évaluation répondent à : 
 
@@ -189,10 +217,8 @@ En parallèle, la ROC-AUC de **0,9** indique que le modèle possède une bonne c
 
 Les performances finales du modèle sont donc évaluées à l'aide de plusieurs métriques complémentaires : l'accuracy, la précision, le rappel (recall), le ROC-AUC et le F1-score.
 
-La régression logistique constitue ici mon premier modèle de référence.
 
-
-Par la suite, à l’aide de la méthode Permutation Importance, je cherche à identifier les variables qui contribuent le plus aux prédictions du modèle. Elle consiste à mélanger aléatoirement les valeurs d’une variable, plusieurs fois, tout en gardant les autres variables inchangées. Le F1-score est recalculé après chaque permutation puis comparé au F1-score initial. Plus la diminution moyenne du F1-score est importante, plus le modèle dépend de cette variable pour réaliser ses prédictions.
+Ensuite, à l’aide de la méthode Permutation Importance, je cherche à identifier les variables qui contribuent le plus aux prédictions du modèle. Elle consiste à mélanger aléatoirement les valeurs d’une variable, plusieurs fois, tout en gardant les autres variables inchangées. Le F1-score est recalculé après chaque permutation puis comparé au F1-score initial. Plus la diminution moyenne du F1-score est importante, plus le modèle dépend de cette variable pour réaliser ses prédictions.
 
 | Rang | Variable         | Importance moyenne | Écart-type |
 |-----:|------------------|--------------------:|-----------:|
@@ -211,7 +237,7 @@ Par la suite, à l’aide de la méthode Permutation Importance, je cherche à i
 
 Ces résultats indiquent que ces trois premières variables ici sont celles dont la permutation entraîne la plus forte dégradation du F1-score. Elles semblent donc être les variables auxquelles ce modèle de régression logistique accorde le plus d'importance pour effectuer ses prédictions.
 
-Après avoir établi un premier modèle de classification, j'ai choisi de comparer ses performances à celles de modèles d'ensemble basés sur des arbres, notamment le Random Forest et le Gradient Boosting. Ces modèles sont adaptés aux données tabulaires et permettent de modéliser des relations non linéaires ainsi que des interactions entre variables. Ce choix répond également à l'objectif du projet d'identifier les variables contribuant le plus aux prédictions du revenu.
+A noter que ce modèle de classifiaction possède ses limites lorsqu'il s'agit de capturer naturellement les relations non linéaires et les intéractioons complexes entre les variables.
 
 
 
@@ -222,6 +248,9 @@ Après avoir établi un premier modèle de classification, j'ai choisi de compar
 | Propre aux modèles à arbres                       | Applicable à presque tous les modèles             |
 | Ne mesure pas directement ton F1                  | Peut mesurer directement la baisse du **F1**      |
 | Calculée à partir du modèle entraîné              | Mesurée en perturbant les données                 |
+
+
+Après avoir établi un premier modèle de classification, j'ai choisi de comparer ses performances à celles de modèles d'ensemble basés sur des arbres, notamment le Random Forest et le Gradient Boosting. Ces modèles sont adaptés aux données tabulaires et permettent de modéliser des relations non linéaires ainsi que des interactions entre variables. Ce choix répond également à l'objectif du projet d'identifier les variables contribuant le plus aux prédictions du revenu.
 
 
 ## Le Random forest 
