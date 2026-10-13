@@ -197,30 +197,45 @@ Comme il s'agit ici d'un problème de classe je commence par utiliser un modèle
 
 Les métriques d'évaluation répondent à : 
 
-**Accuracy** >> Sur toutes mes prédictions combien sont correctes
-**Precision** >> Parmis les personnes que le modèle prédit, combien gagnent vraiment + de 50K (FP)
-**Recall** >> Parmis les personnes qui gagnent 50k ou plus, combien le modèle en détecte (FN)
-**F1** >> agit comme le compromis entre precison et recall
+>> **Accuracy** → Sur toutes mes prédictions, combien sont correctes ? 
+>> **Precision** → Parmis les personnes que le modèle prédit, combien gagnent vraiment plus de 50K (FP) ? 
+>> **Recall** → Parmis les personnes qui gagnent 50k ou plus, combien le modèle en détecte (FN) ? 
+>> **F1** → agit comme le compromis entre precison et recall.
 
-Pour ce faire je recherche des meilleurs paramètres sur le modèles afin de l'optimiser. Je choisis C en paramètres de validation croisée afin de trouver le niveau de régularisation qui généralise le mieux sur mes données et weight = balanced pour compenser l'inégalité de répartition des classes initiale. 
+Afin d'optimiser la régression logistique, j'ai utilisé GridSearchCV avec une validation croisée à 5 plis pour rechercher la meilleure valeur de l'hyperparamètre C, qui contrôle l'intensité de la régularisation.
+
+Le paramètre class_weight="balanced" a été utilisé pour compenser le déséquilibre entre les classes (>50K et ≤50K).
+Cela va permettre d'attribuer un poids plus important aux erreurs concernant la classe minoritaire (>50K) lors de l'entraînement
 J'ai choisi le F1-score comme métrique d'optimisation du GridSearch car ma classe >50K est en effet minoritaire et je voulais trouver un compromis entre Precision et Recall, donc prendre en compte à la fois les faux positifs et les faux négatifs.
 
+Les performances obtenues sur les jeux d'entraînement et de test sont très proches, ce qui ne met pas en évidence de surapprentissage marqué. 
 
-Les performances obtenues sur les jeux d'entraînement et de test sont très proches, ce qui ne met pas en évidence de surapprentissage. 
+Performances sur le jeu de test :
 
-Les résultats obtenus sont contrastés : le modèle identifie correctement une grande partie des individus appartenant réellement à la classe >50K, recall de **85,3 %**, mais sa précision de **56,7 %** révèle un nombre important de faux positifs. Le F1-score de **68,1 %** montre ainsi que le compromis entre précision et rappel reste perfectible avec le seuil de décision de 0,5.
+Accuracy : 80,6 %
+Précision : 56,7 %
+Recall : 85,3 %
+F1-score : 68,1 %
+ROC-AUC : 0,9
 
-De plus, j'ai étudié l'effet d'une modification du seuil de décision sur les performances du modèle, en testant plusieurs valeurs : 0,4, 0,5 et 0,6. Les résultats obtenus montrent des variations relativement faibles des différentes métriques, de l'ordre de quelques centièmes.
-Au regard de la problématique métier, je ne souhaite pas privilégier  la réduction des faux positifs ou des faux négatifs. J'ai donc choisi de conserver le seuil de décision standard de **0,5**.
 
-En parallèle, la ROC-AUC de **0,9** indique que le modèle possède une bonne capacité globale à distinguer les individus >50K des individus <=50K, indépendamment d'un seuil de classification particulier.
+Les résultats obtenus sont contrastés : le modèle identifie correctement une grande partie des individus appartenant réellement à la classe >50K mais génère révèle un nombre important de faux positifs qui limite sa précision (**56,7 %** ). Le F1-score de **68,1 %** montre ainsi que le compromis entre précision et rappel reste perfectible avec le seuil de décision de 0,5.
+
+J'ai par la suite étudié l'effet d'une modification du seuil de décision sur les performances du modèle, en testant plusieurs valeurs : 0,4, 0,5 et 0,6. Les résultats obtenus montrent des variations relativement faibles des différentes métriques, de l'ordre de quelques centièmes.
+Au regard de la problématique métier, je ne souhaite pas privilégier la réduction des faux positifs ou des faux négatifs. J'ai donc choisi de conserver le seuil de décision standard de **0,5**.
+
+En parallèle, la ROC-AUC de **0,9** indique que le modèle possède une bonne capacité globale à distinguer les individus >50K des individus <=50K, indépendamment d'un seuil de classification particulier. 
+<!-- Une ROC-AUC de 0,9 signifie qu'en sélectionnant aléatoirement un individu de chaque classe, le modèle attribue un score plus élevé à l'individu >50K dans environ 90 % des paires. -->
 
 Les performances finales du modèle sont donc évaluées à l'aide de plusieurs métriques complémentaires : l'accuracy, la précision, le rappel (recall), le ROC-AUC et le F1-score.
 
 
-Ensuite, à l’aide de la méthode Permutation Importance, je cherche à identifier les variables qui contribuent le plus aux prédictions du modèle. Elle consiste à mélanger aléatoirement les valeurs d’une variable, plusieurs fois, tout en gardant les autres variables inchangées. Le F1-score est recalculé après chaque permutation puis comparé au F1-score initial. Plus la diminution moyenne du F1-score est importante, plus le modèle dépend de cette variable pour réaliser ses prédictions.
+Ensuite, à l’aide de la méthode Permutation Importance, je cherche à identifier les variables qui contribuent le plus aux prédictions du modèle. 
+Cette méthode permet d'évaluer l'importance des variables en fonction de leur contribution aux performances prédictives.
 
-| Rang | Variable         | Importance moyenne | Écart-type |
+ Elle consiste à mélanger aléatoirement les valeurs d’une variable, plusieurs fois, tout en gardant les autres variables inchangées. Le F1-score est recalculé après chaque permutation puis comparé au F1-score initial. Plus la diminution moyenne du F1-score est importante, plus le modèle dépend de cette variable pour réaliser ses prédictions.
+
+| Rang | Variable         | Importance moyenne  | Écart-type |
 |-----:|------------------|--------------------:|-----------:|
 | 1    | marital_status   |              0.1352 |     0.0049 |
 | 2    | education_num    |              0.0481 |     0.0033 |
@@ -235,29 +250,29 @@ Ensuite, à l’aide de la méthode Permutation Importance, je cherche à identi
 | 11   | native_country   |              0.0008 |     0.0015 |
 | 12   | race             |              0.0004 |     0.0011 |
 
-Ces résultats indiquent que ces trois premières variables ici sont celles dont la permutation entraîne la plus forte dégradation du F1-score. Elles semblent donc être les variables auxquelles ce modèle de régression logistique accorde le plus d'importance pour effectuer ses prédictions.
+Les résultats montrent que marital_status, education_num et capital_gain sont les trois variables dont la permutation entraîne la plus forte diminution du F1-score. Elles semblent donc être les variables auxquelles ce modèle de régression logistique accorde le plus d'importance pour effectuer ses prédictions, selon cette méthode d'évaluation.
 
 A noter que ce modèle de classifiaction possède ses limites lorsqu'il s'agit de capturer naturellement les relations non linéaires et les intéractioons complexes entre les variables.
 
 
+Après avoir établi un premier modèle de classification, j'ai choisi de comparer ses performances à celles de modèles d'ensemble basés sur des arbres, notamment le Random Forest et le Gradient Boosting. Ces modèles sont adaptés aux données tabulaires et permettent de modéliser des relations non linéaires ainsi que des interactions entre variables. Ce choix répond également à un double objectif : améliorer les performances de classification  et identifier les variables contribuant le plus aux prédictions du revenu.
 
-| `feature_importances_`                            | Permutation Importance                            |
-| ------------------------------------------------- | ------------------------------------------------- |
-| Regarde **comment les arbres ont été construits** | Regarde **les conséquences sur les performances** |
-| Basée sur les séparations des arbres              | Basée sur une métrique choisie                    |
-| Propre aux modèles à arbres                       | Applicable à presque tous les modèles             |
-| Ne mesure pas directement ton F1                  | Peut mesurer directement la baisse du **F1**      |
-| Calculée à partir du modèle entraîné              | Mesurée en perturbant les données                 |
-
-
-Après avoir établi un premier modèle de classification, j'ai choisi de comparer ses performances à celles de modèles d'ensemble basés sur des arbres, notamment le Random Forest et le Gradient Boosting. Ces modèles sont adaptés aux données tabulaires et permettent de modéliser des relations non linéaires ainsi que des interactions entre variables. Ce choix répond également à l'objectif du projet d'identifier les variables contribuant le plus aux prédictions du revenu.
+**Limite de la méthode :** La Permutation Importance peut être influencée lorsque certaines variables sont liées entre elles. Par exemple, `marital_status` et `relationship` semblent partager des informations similaires. Si l'une des deux est mélangée, le modèle peut toujours s'appuyer sur l'autre pour effectuer ses prédictions. Leur importance peut donc être sous-estimée, ce qui invite à prendre du recul sur les résultats obtenus.
 
 
 ## Le Random forest 
 
 Pour le Random Forest, le GridSearchCV retient le modèle avec les hyperparamètres suivants : max_depth=None, min_samples_leaf=2, min_samples_split=2 et n_estimators=100.
 
-Le Random Forest obtient une accuracy de 86,6 %, une précision de 77,9 %, un recall de 62,5 % et un F1-score de 69,3 %.
+Performances sur le jeu de test :
+
+Accuracy : 86,6 %
+Précision : 77,9 %
+Recall : 62,5 %
+F1-score : 69,3 %
+ROC-AUC : 0,91
+
+
 Par rapport à la régression logistique, le Random Forest améliore nettement l'accuracy (**86,6**% contre **80,6**%) et surtout la précision (**77,9**% contre **56,7**%). Il génère donc proportionnellement moins de faux positifs lorsqu'il prédit la classe >50K.
 
 En revanche, son recall diminue (**62,5**% contre **85,3**%) : le Random Forest détecte une plus faible proportion des individus appartenant réellement à la classe >50K.
@@ -272,7 +287,7 @@ Autrement dit, le ROC-AUC de 0,91 indique plutôt une très bonne capacité de d
 
 Ensuite, l'analyse par Permutation Importance, basée sur le F1-score, fait de nouveau ressortir marital_status comme la variable dont la permutation dégrade le plus les performances du modèle, avec une importance moyenne de **0,1074**. Elle est suivie par capital_gain à **0,0816** et education_num à **0,0777**.
 
-On retrouve donc des variables déjà importantes pour la régression logistique, mais avec un ordre et des niveaux d'importance différents. Ici, capital_gain passe devant education_num avec le Random Forest.
+On retrouve donc des variables déjà importantes pour la régression logistique, mais avec un ordre et des niveaux d'importance différents. Ici, capital_gain passe devant education_num avec le Random Forest. 
 
 | Rang | Variable         | Importance moyenne | Écart-type |
 |-----:|------------------|--------------------:|-----------:|
@@ -290,10 +305,22 @@ On retrouve donc des variables déjà importantes pour la régression logistique
 | 12   | race             |              0.0016 |     0.0012 |
 
 
+Malgré une amélioration de la précision et de la ROC-AUC, le gain de F1-score reste limité. J'ai donc choisi d'expérimenter un modèle Gradient Boosting afin de déterminer si une construction séquentielle des arbres permettrait d'améliorer davantage les performances de classification.
+
 
 ## Le Gradient Boosting
 
-Pour le Gradient Boosting, celui-ci obtient une accuracy de 87,5 %, une précision de 77,8 %, un recall de 67,8 % et un F1-score de 72,5 %. Par rapport au Random Forest, la précision reste quasiment identique tandis que le recall augmente de 62,5 % à 67,8 %, permettant d'identifier une proportion plus importante des individus appartenant réellement à la classe >50K. Cette amélioration se traduit par un F1-score supérieur à celui du Random Forest (72,5 % contre 69,3 %) et de la régression logistique (68,1 %).
+Pour le Gradiant Boosting, le GridSearchCV retient le modèle avec les hyperparamètres suivants : learning_rate=0.1, max_depth=5, min_samples_leaf=2, n_estimators=200.
+
+Performances sur le jeu de test :
+
+Accuracy : 87,5 %
+Précision : 77,8 %
+Recall : 67,8 %
+F1-score : 72,5 %
+ROC-AUC : 0,929 
+
+Par rapport au Random Forest, la précision reste quasiment identique tandis que le recall augmente de 62,5 % à 67,8 %, permettant ainsi d'identifier une proportion plus importante des individus appartenant réellement à la classe >50K sans augmenter les faux positifs. Cette amélioration se traduit par un F1-score supérieur à celui du Random Forest (72,5 % contre 69,3 %) et de la régression logistique (68,1 %).
 
 La ROC-AUC de **0,929** indique également une très bonne capacité globale à discriminer les deux classes. Parmi les trois modèles testés, le Gradient Boosting présente ainsi les valeurs les plus élevées de F1-score, d'accuracy et de ROC-AUC sur le jeu de test, tandis que la régression logistique conserve le recall le plus élevé.
 
@@ -319,8 +346,49 @@ L'analyse via le permutation importance donne :
 Le Permutation Importance, calculée sur le F1-score, fait de nouveau ressortir marital_status comme la variable dont la permutation dégrade le plus les performances du modèle **0,1604**. Elle est suivie par capital_gain **0,1020** et education_num **0,0800**.
 
 Ces trois variables occupent également les premières places dans le Random Forest. En revanche, le Gradient Boosting accorde davantage d'importance à age, qui passe devant occupation.
-Enfin, race présente une importance moyenne légèrement négative (−0,0001), avec un écart-type de 0,0015. Cette valeur, très proche de zéro, ne permet pas de conclure que cette variable contribue significativement au F1-score du modèle.
 
+Enfin, race présente une importance moyenne légèrement négative (−0,0001), avec un écart-type de 0,0015. Cette valeur très proche de zéro ne permet pas de conclure que cette variable contribue significativement au F1-score du modèle dans ce cas.
+
+### Bilan comparatif des modèles
+
+La comparaison des trois algorithmes montre que le **Gradient Boosting offre le meilleur compromis entre précision et rappel**, avec un F1-score de 72,5 % et une ROC-AUC de 0,929.
+
+La régression logistique détecte une plus grande proportion des individus gagnant réellement plus de 50K, mais génère davantage de faux positifs parmi ses prédictions positives.
+
+Le Random Forest améliore nettement la précision par rapport à la régression logistique, mais au détriment du rappel.
+
+Enfin, l'analyse des variables met en évidence trois facteurs prédictifs récurrents : **la situation matrimoniale, les gains en capital et le niveau d'éducation**.
+
+Ces résultats permettent de retenir le Gradient Boosting comme modèle final pour cette problématique, tout en gardant à l'esprit que les importances mesurées reflètent des associations prédictives et non des relations de causalité.
+
+Permutation importance ne me permet pas de dire pour une caractérisique importante notamment 'martital_statut, si le fait d'être marié pousse la prédiction vers > 50k ou vers <50K. Ou encore si cette caractérisitque contribue de la même manière pour tous les individus. J e vais utiliser la méthode Shap pou tenter de répondre à ces questions.
+
+
+## Méthode SHAP
+
+Afin de mieux comprendre comment les variables influencent les prédictions de mon modèle final de **Gradient Boosting**, je décide d'utiliser la méthode **Shap (SHapley Additive exPlanations)**.
+
+A l'inverse de la Permutation Importance, qui mesure la diminution des performances du modèle lorsqu'une variable est mélangée, SHAP permet d'évaluer la contribution de chaque variable à chaque prédiction.
+
+À travers un graphique *Beeswarm*, la méthode permet de visualiser :
+
+- **L'importance des variables** dans les prédictions du modèle.
+- **Le sens de leur contribution**, vers la classe >50K ou ≤50K.
+- **La variabilité de leurs contributions** selon les individus.
+
+Cette analyse permet ainsi d'approfondir l'interprétation du Gradient Boosting et de compléter les résultats obtenus avec la Permutation Importance.
+
+![Beeswarmplot 1](images/Shap_1.png)
+
+Sur ce graphique : 
+
+- La position horizontale indique une valeur SHAP positive pousse la prédiction vers la classe >50K, une valeur négative vers la classe ≤50K.
+
+- La couleur rouge indique une valeur élevée, bleue une valeur faible. Pour les variables OneHotEncoder, rouge signifie généralement 1 (modalité présente) et bleu 0 (absente).
+
+- Le classement vertical signifie que les variables sont classées selon la moyenne de leurs contributions SHAP absolues.
+
+Les valeurs SHAP sont exprimées sur l'échelle des log-odds. Une contribution positive augmente le score du modèle en faveur de la classe >50K, tandis qu'une contribution négative le diminue. Ces valeurs ne correspondent pas directement à des variations de probabilité.
 
 
 # Etape 5 Analse exploratoire : Power BI
@@ -328,7 +396,6 @@ Enfin, race présente une importance moyenne légèrement négative (−0,0001),
 ## Préparation des données et création des mesures dans Power BI
 
 J'ai procédé au nettoyage des données en python, de ce fait avec  power querry je change uniquement le type et l'information de ma colonne class initialement en texte (<=50K, >50K) pour un type nombre entier (0 ou 1) pour faciliter les calculs d'agrégation futurs.
-
 
 Pour construire mon dashboard, je suis parti de deux tables : DIM_Personne, qui contient les informations personnelles des individus, et FACT_Situation, qui regroupe notamment leur situation professionnelle, familiale et leur classe de revenu.
 
@@ -382,15 +449,15 @@ J'ai ensuite construit une matrice avec :
 - Le pourcentage de personnes gagnant plus de 50K comme valeur.
 
 
-Cette visualisation complète les graphiques précédents : elle permet notamment de constater qu'à diplôme équivalent, la proportion de hauts revenus peut varier sensiblement selon la profession et la situation matrimoniale.
+Cette visualisation me permet de compléter les graphiques précédents : notamment de constater qu'à diplôme équivalent, la proportion de hauts revenus peut varier sensiblement selon la profession et la situation matrimoniale.
 
 Certaines combinaisons de la matrice affichent des proportions très élevées, parfois même 100 %. Cependant, ces résultats peuvent reposer sur un faible nombre d'individus.
 
-Pour éviter de les interpréter trop rapidement, j'ai créé une mesure Nombre d'individus à l'aide de DISTINCTCOUNT.
+Pour éviter de les interpréter trop rapidement, j'ai créé une mesure nombre d'individus à l'aide de DISTINCTCOUNT.
 
 J'ai ensuite créé une page d'info-bulle personnalisée contenant deux cartes : l'une affiche le pourcentage de hauts revenus et l'autre le nombre d'individus correspondant à la cellule survolée.
 
-Cela permet de vérifier rapidement sur combien de personnes repose chaque résultat. 100
+Cela permet de vérifier rapidement sur combien de personnes repose chaque résultat. 
 
 ![Matrice 2](images/matrice2.png)
 
@@ -430,13 +497,11 @@ Récapitulatif des mesures créées :
 
 
 
-Suite à ces différentes analyses, j'ai pu observer de nombreuses limitations du jeu de données. Celles-ci ne permettent pas d'établir de corrélation certaines sur l'appartenance d'un individu à la classe de revenu > 50K selon les caractériques qu'il présente. En revanche des associations statistiques de plusieurs variables sont ressorties, notammment 
-
 ## Conclusion de l'analyse exploratoire et limites du jeu de données
 
 
 
-À travers les différentes analyses réalisées sur Power BI, j'ai pu mettre en évidence plusieurs caractéristiques associées à l'appartenance à la classe de revenu annuel supérieure à 50K.
+Au travers des différentes analyses réalisées sur Power BI, j'ai pu mettre en évidence plusieurs caractéristiques associées à l'appartenance à la classe de revenu annuel supérieure à 50K.
 
 Le **niveau d'études** semble jouer un rôle important : plus celui-ci est élevé, plus la proportion de personnes gagnant plus de 50K a tendance à augmenter. La **catégorie professionnelle** présente également des différences marquées, certaines professions, notamment les métiers spécialisés et les postes de direction, étant davantage représentées parmi les hauts revenus.
 
@@ -468,4 +533,12 @@ Les résultats mettent en évidence des **associations statistiques**, mais ne p
 Ces observations viennent compléter les résultats de mes modèles de machine learning, notamment les analyses d'importance des variables, et permettent de mieux interpréter les facteurs utilisés pour prédire l'appartenance à la classe de revenu supérieure à 50K.
 
 
->> pistes d'améliirations
+
+### Pistes d'amélioration
+
+- **Actualiser le jeu de données** avec des observations plus récentes afin de mieux représenter les réalités socio-économiques actuelles.
+- **Améliorer la granularité des variables explicatives** en intégrant des informations plus précises, notamment sur les professions, les niveaux d'études ou les situations professionnelles.
+- **Mettre en place un rafraîchissement des données tous les deux ans** afin de réévaluer les performances du modèle et de suivre l'évolution des facteurs associés au revenu.
+- **Explorer des implémentations plus avancées du Gradient Boosting**, comme XGBoost ou LightGBM, afin d'évaluer si elles permettent d'améliorer les performances et les temps d'entraînement.
+- **Approfondir l'interprétabilité du modèle** avec des méthodes comme SHAP, pour mieux comprendre comment les différentes variables influencent les prédictions individuelles.
+- **Surveiller les biais potentiels du modèle**, notamment selon le sexe ou l'origine, afin d'évaluer les écarts de performance entre différents groupes d'individus.
