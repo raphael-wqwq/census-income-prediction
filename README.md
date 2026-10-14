@@ -197,10 +197,10 @@ Comme il s'agit ici d'un problème de classe je commence par utiliser un modèle
 
 Les métriques d'évaluation répondent à : 
 
->> **Accuracy** → Sur toutes mes prédictions, combien sont correctes ? 
->> **Precision** → Parmis les personnes que le modèle prédit, combien gagnent vraiment plus de 50K (FP) ? 
->> **Recall** → Parmis les personnes qui gagnent 50k ou plus, combien le modèle en détecte (FN) ? 
->> **F1** → agit comme le compromis entre precison et recall.
+ - **Accuracy** → Sur toutes mes prédictions, combien sont correctes ? 
+ - **Precision** → Parmis les personnes que le modèle prédit, combien gagnent vraiment plus de 50K (FP) ? 
+ - **Recall** → Parmis les personnes qui gagnent 50k ou plus, combien le modèle en détecte (FN) ? 
+ -  **F1** → agit comme le compromis entre precison et recall.
 
 Afin d'optimiser la régression logistique, j'ai utilisé GridSearchCV avec une validation croisée à 5 plis pour rechercher la meilleure valeur de l'hyperparamètre C, qui contrôle l'intensité de la régularisation.
 
@@ -361,24 +361,27 @@ Enfin, l'analyse des variables met en évidence trois facteurs prédictifs récu
 
 Ces résultats permettent de retenir le Gradient Boosting comme modèle final pour cette problématique, tout en gardant à l'esprit que les importances mesurées reflètent des associations prédictives et non des relations de causalité.
 
-Permutation importance ne me permet pas de dire pour une caractérisique importante notamment 'martital_statut, si le fait d'être marié pousse la prédiction vers > 50k ou vers <50K. Ou encore si cette caractérisitque contribue de la même manière pour tous les individus. J e vais utiliser la méthode Shap pou tenter de répondre à ces questions.
+Permutation importance ne me permet pas de dire pour une caractérisique importante notamment 'martital_statut, si le fait d'être marié pousse la prédiction vers > 50k ou vers <50K. Ou encore si cette caractérisitque contribue de la même manière pour tous les individus. 
 
 
 ## Méthode SHAP
 
-Afin de mieux comprendre comment les variables influencent les prédictions de mon modèle final de **Gradient Boosting**, je décide d'utiliser la méthode **Shap (SHapley Additive exPlanations)**.
+Je décide de retenir le **Gradient Boosting** pour cette analyse, car il présente les meilleures performances globales parmi les trois modèles testés, notamment en termes de F1-score et de ROC-AUC.
 
-A l'inverse de la Permutation Importance, qui mesure la diminution des performances du modèle lorsqu'une variable est mélangée, SHAP permet d'évaluer la contribution de chaque variable à chaque prédiction.
+Afin d'approfondir l'interprétation de ses prédictions, j'implémente la méthode **SHAP (SHapley Additive exPlanations)**.
 
-À travers un graphique *Beeswarm*, la méthode permet de visualiser :
+Contrairement à la Permutation Importance qui mesure la diminution des performances du modèle lorsqu'une variable est mélangée, SHAP permet d'évaluer la contribution de chaque variable à chaque prédiction.
 
-- **L'importance des variables** dans les prédictions du modèle.
-- **Le sens de leur contribution**, vers la classe >50K ou ≤50K.
+
+À travers un graphique **Beeswarm**, la méthode SHAP permet de visualiser :
+
+- **L'importance des variables** dans les prédictions du modèle, selon l'amplitude moyenne de leurs contributions.
+- **Le sens de leurs contributions**, vers la classe >50K ou ≤50K.
 - **La variabilité de leurs contributions** selon les individus.
 
-Cette analyse permet ainsi d'approfondir l'interprétation du Gradient Boosting et de compléter les résultats obtenus avec la Permutation Importance.
 
 ![Beeswarmplot 1](images/Shap_1.png)
+
 
 Sur ce graphique : 
 
@@ -389,6 +392,39 @@ Sur ce graphique :
 - Le classement vertical signifie que les variables sont classées selon la moyenne de leurs contributions SHAP absolues.
 
 Les valeurs SHAP sont exprimées sur l'échelle des log-odds. Une contribution positive augmente le score du modèle en faveur de la classe >50K, tandis qu'une contribution négative le diminue. Ces valeurs ne correspondent pas directement à des variations de probabilité.
+
+
+### Analyse des résultats SHAP
+
+Je concentre l'analyse du graphique Beeswarm sur les **10 premières variables ou modalités encodées**, comme je cherche à déterminer les principales caractéristiques utilisées par le gradient boosting pour prédire la classe de revenu. Ses caractérisitques possèdent les importances moyenne de leurs contributions SHAP les plus importantes. 
+
+
+Ainsi plusieurs tendances se dégagent :
+
+- **Situation matrimoniale (`Married-civ-spouse`) :** cette modalité ressort comme la plus importante du graphique. Son appartenance contribue généralement à orienter les prédictions vers la classe >50K, tandis que son absence contribue plutôt dans le sens inverse.
+
+- **Âge (`age`) :** les âges plus élevés présentent généralement des contributions positives, contrairement aux âges plus faibles, qui orientent davantage les prédictions vers la classe ≤50K.
+
+- **Gains en capital (`capital_gain`) :** cette variable présente les contributions positives les plus fortes pour certains individus. Des gains en capital élevés peuvent ainsi fortement orienter les prédictions vers la classe >50K.
+
+- **Niveau d'études (`education_num`) :** les niveaux d'études élevés contribuent généralement positivement aux prédictions, tandis que les niveaux plus faibles présentent des contributions négatives.
+
+- **Heures travaillées (`hours_per_week`) :** un nombre d'heures travaillées plus élevé tend à contribuer positivement à la prédiction d'un revenu supérieur à 50K.
+
+- **Situation familiale (`Own-child`) :** l'appartenance à cette catégorie contribue généralement négativement aux prédictions vers la classe >50K.
+
+- **Pertes en capital (`capital_loss`) :** cette variable présente des contributions positives ou négatives parfois importantes selon les observations, traduisant un comportement prédictif plus complexe.
+
+- **Catégorie professionnelle (`Exec-managerial` et `Prof-specialty`) :** ces deux modalités, correspondant aux postes de direction et aux professions spécialisées, contribuent généralement positivement aux prédictions vers la classe >50K.
+
+- **Sexe (`Female`) :** cette modalité présente une contribution généralement négative, mais d'une amplitude relativement faible par rapport aux principales caractéristiques.
+
+
+Ces résultats complètent la Permutation Importance en précisant **le sens et l'ampleur des contributions des caractéristiques aux prédictions du Gradient Boosting**. Ils permettent ainsi de mieux comprendre comment les différentes caractéristiques contribuent aux prédictions du modèle.
+
+Ils mettent notamment en évidence le rôle de la situation matrimoniale, de l'âge, des gains en capital et du niveau d'études. Cette méthode montre également que l'ampleur des contributions peut varier sensiblement d'un individu à l'autre, certaines caractéristiques ayant un poids particulièrement important dans certaines prédictions. C'est-à-dire qu'une même caractérisitque peut contribuer différemment aux prédictions selon les individus.
+
+Ils rejoignent également plusieurs tendances observées dans Power BI (ci-dessous), notamment concernant la situation matrimoniale, le niveau d'études, la catégorie professionnelle et les gains en capital.
 
 
 # Etape 5 Analse exploratoire : Power BI
@@ -500,17 +536,15 @@ Récapitulatif des mesures créées :
 ## Conclusion de l'analyse exploratoire et limites du jeu de données
 
 
-
 Au travers des différentes analyses réalisées sur Power BI, j'ai pu mettre en évidence plusieurs caractéristiques associées à l'appartenance à la classe de revenu annuel supérieure à 50K.
 
-Le **niveau d'études** semble jouer un rôle important : plus celui-ci est élevé, plus la proportion de personnes gagnant plus de 50K a tendance à augmenter. La **catégorie professionnelle** présente également des différences marquées, certaines professions, notamment les métiers spécialisés et les postes de direction, étant davantage représentées parmi les hauts revenus.
+Le **niveau d'études** semble jouer un rôle important : plus celui-ci est élevé, plus la proportion de personnes gagnant plus de 50K a tendance à augmenter. La **catégorie professionnelle** présente elle des différences marquées, les métiers spécialisés et les postes de direction, sont associés à une proportion plus élevés d'individus percevant un haut revenu.
 
 Le **statut matrimonial** ressort aussi comme un facteur particulièrement associé au niveau de revenu. Les personnes mariées présentent une proportion de hauts revenus nettement supérieure à celle des personnes célibataires ou divorcées.
 
 D'autres tendances ont également été observées concernant l'âge, le nombre d'heures travaillées et les gains en capital. Ces résultats montrent que plusieurs caractéristiques peuvent être associées au revenu d'un individu et qu'il est intéressant de les étudier ensemble plutôt que séparément.
 
 La matrice d'analyse croisée m'a justement permis d'approfondir ces observations. Elle montre notamment qu'à niveau d'études équivalent, la proportion de hauts revenus peut varier sensiblement selon la profession, la situation matrimoniale et le sexe.
-
 
 
 
@@ -530,8 +564,10 @@ Malgré ces limites, cette analyse exploratoire m'a permis de mieux comprendre l
 
 Les résultats mettent en évidence des **associations statistiques**, mais ne permettent pas d'affirmer qu'une caractéristique entraîne directement un revenu plus élevé. D'autres facteurs, présents ou absents du jeu de données, peuvent intervenir.
 
-Ces observations viennent compléter les résultats de mes modèles de machine learning, notamment les analyses d'importance des variables, et permettent de mieux interpréter les facteurs utilisés pour prédire l'appartenance à la classe de revenu supérieure à 50K.
+Ces observations viennent compléter les résultats de mes modèles de machine learning, notamment lamment la Permutation Importance et l'analyse SHAP.  
+La première permet d'identifier les variables qui influencent le plus les performances prédictives du modèle, tandis que SHAP apporte une interprétation plus détaillée de leurs contributions aux prédictions individuelles. 
 
+L'ensemble de ces analyses permet ainsi de mieux comprendre les caractéristiques utilisées par ce modèle notamment pour prédire l'appartenance à la classe de revenu supérieure à 50K.
 
 
 ### Pistes d'amélioration
@@ -540,5 +576,4 @@ Ces observations viennent compléter les résultats de mes modèles de machine l
 - **Améliorer la granularité des variables explicatives** en intégrant des informations plus précises, notamment sur les professions, les niveaux d'études ou les situations professionnelles.
 - **Mettre en place un rafraîchissement des données tous les deux ans** afin de réévaluer les performances du modèle et de suivre l'évolution des facteurs associés au revenu.
 - **Explorer des implémentations plus avancées du Gradient Boosting**, comme XGBoost ou LightGBM, afin d'évaluer si elles permettent d'améliorer les performances et les temps d'entraînement.
-- **Approfondir l'interprétabilité du modèle** avec des méthodes comme SHAP, pour mieux comprendre comment les différentes variables influencent les prédictions individuelles.
 - **Surveiller les biais potentiels du modèle**, notamment selon le sexe ou l'origine, afin d'évaluer les écarts de performance entre différents groupes d'individus.
